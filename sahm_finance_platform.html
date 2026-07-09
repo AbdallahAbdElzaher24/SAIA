@@ -1011,7 +1011,7 @@ function buildHeroDecor(){
      GET {baseUrl}/api/news[?ticker=XXX]         -> gold.news_sentiments rows (article + positive/negative/neutral scores)
 ======================================================== */
 const API_CONFIG = {
-  baseUrl: 'http://localhost:8000', // TODO: point at your saia_backend host
+  baseUrl: 'https://saia-production-af55.up.railway.app',
   endpoints: {
     companies: '/api/companies',
     stockPrices: '/api/stock-prices',
