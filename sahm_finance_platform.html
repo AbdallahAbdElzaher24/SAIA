@@ -20,22 +20,37 @@
     --bg-2: #070a13;
     --panel: #10182b;
     --panel-2: #141d34;
-    --border: #223057;
-    --text: #eef2fb;
-    --text-dim: #93a1c2;
-    --text-dimmer: #5f6d8f;
-    --green: #3ecf7a;
-    --green-soft: rgba(62,207,122,0.14);
-    --rose: #e2566d;
-    --rose-soft: rgba(226,86,109,0.14);
-    --indigo: #6b7cf0;
-    --indigo-soft: rgba(107,124,240,0.14);
-    --grey: #9aa5bd;
-    --grey-soft: rgba(154,165,189,0.14);
+    --border: #2a3a68;
+    --text: #f3f6fd;
+    --text-dim: #a3b0cc;
+    --text-dimmer: #7784a3;
+    --green: #4ade8a;
+    --green-strong: #34d17a;
+    --green-soft: rgba(74,222,138,0.14);
+    --green-glow: rgba(74,222,138,0.45);
+    --rose: #f0708a;
+    --rose-strong: #ec5d78;
+    --rose-soft: rgba(240,112,138,0.14);
+    --rose-glow: rgba(240,112,138,0.45);
+    --indigo: #8b98f5;
+    --indigo-soft: rgba(139,152,245,0.14);
+    --grey: #a9b3c9;
+    --grey-soft: rgba(169,179,201,0.14);
     --radius: 14px;
+
+    --glass-bg: rgba(19,27,49,0.62);
+    --glass-bg-strong: rgba(16,24,43,0.78);
+    --glass-border: rgba(255,255,255,0.09);
+    --glass-blur: 18px;
+    --glass-blur-strong: 26px;
+    --shadow-ambient: 0 20px 50px -24px rgba(0,0,0,0.65);
+
+    --ease-spring: cubic-bezier(.2,.8,.2,1);
+    --ease-smooth: cubic-bezier(.22,.7,.24,1);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
   body{
     background:var(--bg);
     color:var(--text);
@@ -47,6 +62,63 @@
   .hidden{display:none !important;}
   a{color:inherit;text-decoration:none;}
   button{font-family:inherit;cursor:pointer;}
+
+  /* ---------- focus visibility (a11y) ---------- */
+  a:focus-visible, button:focus-visible, input:focus-visible,
+  select:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--green);
+    outline-offset:2px;
+    border-radius:6px;
+  }
+  .skip-link{
+    position:absolute;top:-48px;left:12px;z-index:200;
+    background:var(--green);color:#06170d;font-weight:800;
+    padding:12px 18px;border-radius:9px;transition:top .2s var(--ease-smooth);
+  }
+  .skip-link:focus{top:12px;}
+  @media (prefers-contrast: more){
+    :root{ --border:#4a5c94; --text-dim:#c3cbe0; }
+  }
+
+  /* ---------- skeleton loaders ---------- */
+  @keyframes shimmer{
+    0%{background-position:-260px 0;}
+    100%{background-position:260px 0;}
+  }
+  .skeleton{
+    position:relative;overflow:hidden;
+    background:linear-gradient(90deg, var(--panel-2) 0%, rgba(255,255,255,0.06) 50%, var(--panel-2) 100%);
+    background-size:260px 100%;
+    animation:shimmer 1.4s ease-in-out infinite;
+    border-radius:8px;color:transparent !important;
+  }
+  .skeleton-line{height:12px;border-radius:6px;margin-bottom:8px;}
+  .skeleton-line.w60{width:60%;}
+  .skeleton-line.w40{width:40%;}
+  .skeleton-spark{height:28px;width:100%;border-radius:6px;}
+  .skeleton-card{
+    background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius);
+    padding:18px;backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));
+  }
+
+  /* ---------- scroll reveal (feature cards, FAQ, final CTA) ---------- */
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1);}
+  .reveal.visible{opacity:1;transform:translateY(0);}
+  .feature-grid .feature-card.reveal:nth-child(1){transition-delay:0s;}
+  .feature-grid .feature-card.reveal:nth-child(2){transition-delay:.1s;}
+  .feature-grid .feature-card.reveal:nth-child(3){transition-delay:.2s;}
+  .feature-grid .feature-card.reveal:nth-child(4){transition-delay:.3s;}
+  .faq-right .faq-item.reveal:nth-child(1){transition-delay:0s;}
+  .faq-right .faq-item.reveal:nth-child(2){transition-delay:.08s;}
+  .faq-right .faq-item.reveal:nth-child(3){transition-delay:.16s;}
+  .faq-right .faq-item.reveal:nth-child(4){transition-delay:.24s;}
+  .faq-right .faq-item.reveal:nth-child(5){transition-delay:.32s;}
+
+  /* ---------- shared pulse (live dot, badges) ---------- */
+  @keyframes pulseDot{
+    0%,100%{box-shadow:0 0 8px currentColor;}
+    50%{box-shadow:0 0 8px currentColor, 0 0 0 6px rgba(62,207,122,0.16);}
+  }
 
   /* ---------- LOGO ---------- */
   .logo-mark{display:block;flex-shrink:0;line-height:0;}
@@ -72,6 +144,32 @@
     text-align:center;
     padding:20px 6vw 60px;
     overflow:hidden;
+  }
+  .hero::before{
+    content:'';position:absolute;inset:-20% -15% auto -15%;height:85%;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(ellipse at 24% 22%, rgba(74,222,138,0.20), transparent 58%),
+      radial-gradient(ellipse at 78% 14%, rgba(240,112,138,0.15), transparent 55%),
+      radial-gradient(ellipse at 52% 55%, rgba(139,152,245,0.10), transparent 60%);
+    filter:blur(54px);
+    background-size:180% 180%;
+    animation:auroraDrift 22s var(--ease-smooth) infinite alternate;
+    will-change:transform, background-position;
+  }
+  .hero::after{
+    content:'';position:absolute;inset:-20% -15% auto -15%;height:85%;z-index:0;pointer-events:none;
+    background:radial-gradient(ellipse at 65% 30%, rgba(74,222,138,0.10), transparent 62%);
+    filter:blur(70px);
+    animation:auroraDriftSlow 30s var(--ease-smooth) infinite alternate;
+  }
+  @keyframes auroraDrift{
+    0%{transform:translate(0,0) scale(1) rotate(0deg);background-position:0% 0%;}
+    50%{transform:translate(2%,1.5%) scale(1.05) rotate(1deg);background-position:40% 30%;}
+    100%{transform:translate(4%,3%) scale(1.1) rotate(-1deg);background-position:70% 60%;}
+  }
+  @keyframes auroraDriftSlow{
+    0%{transform:translate(0,0) scale(1);}
+    100%{transform:translate(-3%,2%) scale(1.12);}
   }
   .hero-bg-arrows{position:absolute;inset:0;pointer-events:none;z-index:0;}
   .hero-chart{position:absolute;inset:0;width:100%;height:100%;opacity:0.5;}
@@ -100,7 +198,7 @@
     margin-bottom:34px;
     background:rgba(62,207,122,0.06);
   }
-  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--green);color:var(--green);box-shadow:0 0 8px var(--green);animation:pulseDot 1.8s ease-in-out infinite;}
   h1.headline{
     font-family:'Anton','Fraunces',serif;
     font-weight:400;
@@ -114,6 +212,7 @@
   }
   h1.headline .accent-up{color:var(--green);}
   h1.headline .accent-down{color:var(--rose);}
+  #heroDirectionWord{display:inline-block;transition:opacity .25s ease;}
   .sub{
     color:var(--text-dim);
     font-size:clamp(17px,1.8vw,21px);
@@ -123,12 +222,22 @@
   }
   .cta-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center;}
   .btn-primary{
+    position:relative;
     background:linear-gradient(90deg,var(--green),#2fa864);
     color:#06170d;font-weight:800;font-size:17.5px;
     padding:17px 42px;border-radius:11px;border:none;
     box-shadow:0 10px 30px -8px rgba(62,207,122,0.5);
     transition:transform .15s ease, box-shadow .15s ease;
     font-family:'Inter',sans-serif;
+  }
+  .btn-primary::after{
+    content:'';position:absolute;inset:-7px;border-radius:15px;z-index:-1;
+    background:var(--green);opacity:0.3;filter:blur(16px);
+    animation:ctaPulse 2.6s ease-in-out infinite;
+  }
+  @keyframes ctaPulse{
+    0%,100%{opacity:0.22;transform:scale(0.96);}
+    50%{opacity:0.42;transform:scale(1.05);}
   }
   .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 34px -6px rgba(62,207,122,0.65);}
   .btn-ghost{
@@ -141,11 +250,14 @@
     display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:48px;position:relative;z-index:2;
   }
   .stat-card{
-    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--radius);
     padding:20px 26px;min-width:150px;text-align:left;
   }
+  .stat-card:nth-child(2){border-left-color:var(--indigo);}
+  .stat-card:nth-child(3){border-left-color:var(--rose);}
   .stat-card .lbl{color:var(--text-dimmer);font-size:11.5px;letter-spacing:1.2px;margin-bottom:7px;text-transform:uppercase;font-weight:600;}
   .stat-card .val{font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:700;}
+  .stat-card .val .live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);color:var(--green);box-shadow:0 0 8px var(--green);animation:pulseDot 1.8s ease-in-out infinite;display:inline-block;}
 
   /* ---------- ABOUT / WHAT IS SAIA ---------- */
   .about{
@@ -162,8 +274,13 @@
   .about p.lead b{color:var(--text);}
   .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;text-align:left;}
   .feature-card{
-    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
-    padding:26px;
+    background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius);
+    backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));
+    padding:26px;transition:transform .24s var(--ease-spring), box-shadow .24s var(--ease-smooth), border-color .2s ease;
+  }
+  .feature-card:hover{
+    transform:translateY(-4px);border-color:var(--indigo);
+    box-shadow:0 18px 40px -20px rgba(139,152,245,0.4), var(--shadow-ambient);
   }
   .feature-card .f-icon{width:40px;height:40px;border-radius:10px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:18px;}
   .feature-card h3{font-size:17px;margin:0 0 9px;font-weight:800;}
@@ -223,11 +340,21 @@
 
 
   .ticker-tape{
-    width:100%;overflow:hidden;
-    border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-    background:var(--panel);
+    width:100%;overflow:hidden;position:relative;
+    border-top:1px solid var(--glass-border);border-bottom:1px solid var(--glass-border);
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));
     padding:14px 0;
+    -webkit-mask-image:linear-gradient(90deg, transparent, #000 110px, #000 calc(100% - 50px), transparent);
+    mask-image:linear-gradient(90deg, transparent, #000 110px, #000 calc(100% - 50px), transparent);
   }
+  .tape-live-badge{
+    position:absolute;top:50%;left:16px;transform:translateY(-50%);z-index:3;
+    display:flex;align-items:center;gap:7px;pointer-events:none;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.6px;
+    color:var(--green);
+  }
+  .tape-live-badge .dot{width:5px;height:5px;border-radius:50%;background:var(--green);color:var(--green);box-shadow:0 0 6px var(--green);animation:pulseDot 1.8s ease-in-out infinite;}
   .ticker-track{display:flex;gap:46px;width:max-content;animation:scrollTape 90s linear infinite;}
   @keyframes scrollTape{from{transform:translateX(0);}to{transform:translateX(-50%);}}
   .tick-item{display:flex;align-items:center;gap:9px;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;white-space:nowrap;}
@@ -238,36 +365,60 @@
   .l-footer{text-align:center;color:var(--text-dimmer);font-size:12.5px;padding:22px;background:var(--bg);}
 
   /* ---------- APP SHELL ---------- */
-  #app{display:flex;min-height:100vh;background:var(--bg);}
+  #app{display:flex;min-height:100vh;background:var(--bg);position:relative;}
   .sidebar{
-    width:250px;flex-shrink:0;background:var(--bg-2);
-    border-right:1px solid var(--border);
+    width:250px;flex-shrink:0;
+    background:var(--glass-bg-strong);
+    backdrop-filter:blur(var(--glass-blur-strong)) saturate(140%);
+    -webkit-backdrop-filter:blur(var(--glass-blur-strong)) saturate(140%);
+    border-right:1px solid var(--glass-border);
     padding:22px 16px;display:flex;flex-direction:column;gap:6px;
+    position:relative;z-index:60;
+    transition:transform .32s var(--ease-smooth);
   }
   .sidebar .brand{padding:6px 8px 22px;font-size:22px;}
   .nav-item{
     display:flex;align-items:center;gap:12px;
     padding:12px 14px;border-radius:10px;color:var(--text-dim);
     font-size:15.5px;font-weight:600;background:transparent;border:none;width:100%;text-align:left;
+    transition:background .18s var(--ease-smooth), color .18s ease, transform .15s ease;
   }
   .nav-item .ic{width:24px;text-align:center;font-size:20px;}
   .nav-item .ic.svg-ic{display:inline-flex;align-items:center;justify-content:center;}
   .nav-item .ic.svg-ic svg{width:21px;height:21px;color:inherit;}
-  .nav-item:hover{background:var(--panel-2);color:var(--text);}
+  .nav-item:hover{background:var(--panel-2);color:var(--text);transform:translateX(2px);}
   .nav-item.active{background:var(--green-soft);color:var(--green);}
   .nav-label{color:var(--text-dimmer);font-size:11.5px;letter-spacing:1.2px;padding:14px 14px 4px;text-transform:uppercase;font-weight:700;}
+
+  /* mobile slide-in drawer */
+  .sidebar-overlay{
+    display:none;position:fixed;inset:0;background:rgba(4,6,12,0.55);
+    backdrop-filter:blur(2px);z-index:55;opacity:0;pointer-events:none;
+    transition:opacity .28s var(--ease-smooth);
+  }
+  .menu-toggle{
+    display:none;background:var(--glass-bg);border:1px solid var(--glass-border);
+    border-radius:9px;width:40px;height:40px;align-items:center;justify-content:center;
+    color:var(--text);font-size:19px;flex-shrink:0;
+  }
+  .menu-toggle:hover{border-color:var(--green);color:var(--green);}
 
   .main{flex:1;min-width:0;display:flex;flex-direction:column;}
   .topbar{
     display:flex;align-items:center;gap:14px;
-    padding:18px 28px;border-bottom:1px solid var(--border);
-    background:var(--bg-2);
+    padding:18px 28px;border-bottom:1px solid var(--glass-border);
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(140%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(140%);
+    position:sticky;top:0;z-index:40;
   }
   .search-box{
     flex:1;display:flex;align-items:center;gap:10px;
     background:var(--panel);border:1px solid var(--border);border-radius:10px;
     padding:11px 16px;color:var(--text-dim);
+    transition:border-color .18s ease, box-shadow .18s ease;
   }
+  .search-box:focus-within{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft);}
   .search-box input{
     background:transparent;border:none;outline:none;color:var(--text);width:100%;font-size:15.5px;font-family:inherit;
   }
@@ -276,8 +427,27 @@
     border:1px solid var(--border);border-radius:999px;padding:9px 16px;font-size:14.5px;font-weight:500;color:var(--text-dim);
   }
 
-  .ticker-strip-app{overflow:hidden;background:var(--panel);border-bottom:1px solid var(--border);padding:9px 0;}
-  .view{padding:26px 28px;}
+  @media (max-width:880px){
+    .menu-toggle{display:inline-flex;}
+    .sidebar{
+      position:fixed;top:0;left:0;height:100vh;width:270px;
+      transform:translateX(-104%);box-shadow:none;
+    }
+    .sidebar.open{transform:translateX(0);box-shadow:24px 0 60px -20px rgba(0,0,0,0.6);}
+    .sidebar .brand span.txt, .nav-item .txt, .nav-label{display:inline !important;}
+    .sidebar .brand{justify-content:flex-start;}
+    .nav-item{justify-content:flex-start;}
+    .sidebar-overlay.show{display:block;opacity:1;pointer-events:auto;}
+  }
+
+  .ticker-strip-app{
+    overflow:hidden;background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));
+    border-bottom:1px solid var(--glass-border);padding:9px 0;position:relative;
+    -webkit-mask-image:linear-gradient(90deg, transparent, #000 96px, #000 calc(100% - 40px), transparent);
+    mask-image:linear-gradient(90deg, transparent, #000 96px, #000 calc(100% - 40px), transparent);
+  }
+  @keyframes viewFade{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  .view{padding:26px 28px;animation:viewFade .4s cubic-bezier(.2,.7,.3,1);}
   .filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0 18px;}
   .filter-bar select{
     background:var(--panel);border:1px solid var(--border);border-radius:8px;
@@ -300,11 +470,26 @@
   .grid-stocks{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:16px;}
 
   .stock-card{
-    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
-    padding:18px;cursor:pointer;transition:border-color .15s, transform .15s;
+    background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius);
+    backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));
+    padding:18px;cursor:pointer;perspective:800px;
+    transition:border-color .2s var(--ease-smooth), transform .28s var(--ease-spring), box-shadow .28s var(--ease-smooth);
     position:relative;
   }
-  .stock-card:hover{border-color:var(--green);transform:translateY(-3px);}
+  .stock-card:hover{
+    border-color:var(--green);
+    transform:translateY(-6px) scale(1.015) rotateX(1.5deg);
+    box-shadow:0 22px 46px -18px var(--green-glow), var(--shadow-ambient);
+  }
+  .stock-card:has(.chg.down):hover{
+    border-color:var(--rose);
+    box-shadow:0 22px 46px -18px var(--rose-glow), var(--shadow-ambient);
+  }
+  .stock-card:active{transform:translateY(-2px) scale(1.005);}
+  @keyframes flashUp{0%{background:rgba(62,207,122,0.32);}100%{background:transparent;}}
+  @keyframes flashDown{0%{background:rgba(226,86,109,0.32);}100%{background:transparent;}}
+  .stock-card.flash-up{animation:flashUp 1.6s ease-out;}
+  .stock-card.flash-down{animation:flashDown 1.6s ease-out;}
   .stock-card .row1{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
   .stock-card .sym{font-weight:800;font-size:17.5px;}
   .stock-card .name{color:var(--text-dimmer);font-size:13px;margin-top:2px;}
@@ -321,18 +506,23 @@
   display: inline-flex;   
   align-items: center;     
   gap: 6px;               
-  width: max-content;      
+  width: max-content;
+  margin-right:22px; /* clears the absolutely-positioned star button in the card's corner */
 }  .stock-card .price-row{display:flex;align-items:flex-end;justify-content:space-between;margin-top:12px;}
   .price{font-family:'IBM Plex Mono',monospace;font-size:23px;font-weight:700;}
   .chg{font-family:'IBM Plex Mono',monospace;font-size:14.5px;font-weight:700;}
   .up{color:var(--green);} .down{color:var(--rose);}
-  .spark{margin-top:10px;}
+  .spark{margin-top:10px;line-height:0;}
+  .spark svg{display:block;width:100%;height:28px;overflow:visible;}
+  .spark .spark-line{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .star-btn{
     position:absolute;top:14px;right:14px;background:none;border:none;
     font-size:18px;color:var(--text-dimmer);line-height:1;padding:2px;z-index:2;
+    transition:transform .2s cubic-bezier(.34,1.56,.64,1), color .15s;
   }
   .star-btn.active{color:#f5c542;}
-  .star-btn:hover{color:#f5c542;}
+  .star-btn:hover{color:#f5c542;transform:scale(1.14);}
+  .star-btn:active{transform:scale(0.75);}
 
   /* predictions table */
   .pred-table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
@@ -358,9 +548,17 @@
   .home-col .grid-news, .home-col .grid-stocks{grid-template-columns:1fr;}
 
   .grid-news{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
-  .news-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:border-color .15s ease, transform .15s ease;position:relative;}
+  .news-card{
+    background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius);
+    backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));
+    padding:18px;cursor:pointer;position:relative;
+    transition:border-color .2s var(--ease-smooth), transform .24s var(--ease-spring), box-shadow .24s var(--ease-smooth);
+  }
   .news-card .star-btn{top:16px;right:16px;}
-  .news-card:hover{border-color:var(--green);transform:translateY(-2px);}
+  .news-card:hover{
+    border-color:var(--green);transform:translateY(-4px) scale(1.01);
+    box-shadow:0 18px 40px -18px var(--green-glow), var(--shadow-ambient);
+  }
   .news-card .src{color:var(--green);font-size:12px;letter-spacing:.5px;margin-bottom:8px;font-weight:600;}
   .news-card h3{font-size:16.5px;font-weight:700;margin:0 0 10px;line-height:1.5;padding-right:26px;}
   .news-card .news-desc{color:var(--text-dim);font-size:13px;line-height:1.55;margin:0 0 12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
@@ -431,7 +629,11 @@
   .stat-box{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:15px 16px;}
   .stat-box .lbl{color:var(--text-dimmer);font-size:11.5px;margin-bottom:6px;letter-spacing:.5px;font-weight:600;}
   .stat-box .val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;}
-  .chart-panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+  .chart-panel{
+    background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius);
+    backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));
+    padding:20px;margin-bottom:20px;
+  }
   .chart-panel h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 14px;font-weight:700;}
   .pred-callout{
     display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
@@ -478,9 +680,13 @@
     display:flex;align-items:center;justify-content:center;z-index:80;
   }
   .modal-box{
-    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    background:var(--glass-bg-strong);border:1px solid var(--glass-border);border-radius:var(--radius);
+    backdrop-filter:blur(var(--glass-blur-strong));-webkit-backdrop-filter:blur(var(--glass-blur-strong));
     padding:26px 26px 22px;width:min(380px,90vw);
+    box-shadow:var(--shadow-ambient);
+    animation:modalPop .22s var(--ease-spring);
   }
+  @keyframes modalPop{from{opacity:0;transform:scale(.96) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
   .modal-box h3{margin:0 0 6px;font-family:'Fraunces',serif;font-size:19px;font-weight:700;}
   .modal-box p{margin:0 0 18px;color:var(--text-dim);font-size:14px;line-height:1.6;}
   .modal-options{display:flex;flex-direction:column;gap:9px;}
@@ -492,15 +698,21 @@
   .modal-cancel{margin-top:16px;background:none;border:none;color:var(--text-dimmer);font-size:13.5px;width:100%;text-align:center;}
   .modal-cancel:hover{color:var(--text-dim);}
 
-  @media (max-width:880px){
-    .sidebar{width:70px;padding:16px 8px;}
-    .sidebar .brand span.txt, .nav-item .txt, .nav-label{display:none;}
-    .sidebar .brand{justify-content:center;}
-    .nav-item{justify-content:center;}
+  @media (prefers-reduced-motion: reduce){
+    .view, .reveal, .float-arrow, .float-pill, .hero::before, .hero::after, .btn-primary::after,
+    .stock-card.flash-up, .stock-card.flash-down, .eyebrow .dot, .tape-live-badge .dot,
+    .stat-card .live-dot, #heroDirectionWord, .ticker-track, .skeleton,
+    .stock-card:hover, .news-card:hover, .feature-card:hover{
+      animation:none !important;transition:none !important;
+    }
+    .reveal{opacity:1 !important;transform:none !important;}
+    .stock-card:hover, .news-card:hover{transform:none !important;}
+    html{scroll-behavior:auto;}
   }
 </style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
 <!-- reusable logo template — the user's own logo image (embedded as base64
      so the header/sidebar logo never depends on an external file). Cloned
@@ -526,11 +738,17 @@
 
     <div class="hero-inner">
       <div class="eyebrow"><span class="dot"></span> LIVE DATA FROM GLOBAL &amp; REGIONAL MARKETS</div>
-      <h1 class="headline">The stock is moving.<br><span class="accent-up">Which way?</span></h1>
+      <h1 class="headline">The stock is moving.<br><span class="accent-up" id="heroDirectionWord">Which way?</span></h1>
       <p class="sub">SAIA tracks live prices across global and regional markets, runs them through AI-driven predictions, and shows you one clear signal — <span style="color:var(--green);font-weight:600">up</span> or <span style="color:var(--rose);font-weight:600">down</span> — before you decide.</p>
       <div class="cta-row" style="flex-direction:column;gap:10px;align-items:center">
         <div id="googleSignInBtn"></div>
         <div style="font-size:13px;color:var(--text-dimmer)">Sign in with the Google account you already have — no new account needed.</div>
+      </div>
+
+      <div class="stat-strip" id="heroStats">
+        <div class="stat-card"><div class="lbl">Stocks Tracked</div><div class="val" id="statStocks">—</div></div>
+        <div class="stat-card"><div class="lbl">Sectors Covered</div><div class="val" id="statSectors">—</div></div>
+        <div class="stat-card"><div class="lbl">Live Refresh</div><div class="val" style="display:flex;align-items:center;gap:8px;"><span class="live-dot"></span>20s</div></div>
       </div>
 
     </div>
@@ -542,22 +760,22 @@
       <h2>What is SAIA?</h2>
       <p class="lead"><b>SAIA stands for Stock And Arrows Investing App.</b> It's built around one simple idea: every stock is either pointed up or pointed down. SAIA's job is to make that direction obvious — backed by real data and AI analysis — before you put your money behind it.</p>
       <div class="feature-grid">
-        <div class="feature-card">
+        <div class="feature-card reveal">
           <div class="f-icon">📡</div>
           <h3>Live Market Data</h3>
           <p>Prices, volume and history pulled continuously from major exchanges — NASDAQ, TADAWUL, EGX, DFM and more.</p>
         </div>
-        <div class="feature-card">
+        <div class="feature-card reveal">
           <div class="f-icon">✦</div>
           <h3>AI-Powered Predictions</h3>
           <p>A prediction model projects where each stock is likely headed over the next 30 days.</p>
         </div>
-        <div class="feature-card">
+        <div class="feature-card reveal">
           <div class="f-icon">↕</div>
           <h3>One Clear Up/Down Signal</h3>
           <p>No jargon, no clutter. Just a green arrow or a red arrow, so you know the direction at a glance.</p>
         </div>
-        <div class="feature-card">
+        <div class="feature-card reveal">
           <div class="f-icon">💬</div>
           <h3>Ask the AI Agent</h3>
           <p>Talk to SAIA's AI agent directly — ask about any stock, compare two tickers, or get a plain-English read on the market.</p>
@@ -567,6 +785,7 @@
   </div>
 
   <div id="tapeSection" class="ticker-tape">
+    <div class="tape-live-badge"><span class="dot"></span>LIVE</div>
     <div class="ticker-track" id="landingTape"></div>
   </div>
 
@@ -583,7 +802,7 @@
   </div>
 
   <div class="final-cta">
-    <div class="final-cta-card">
+    <div class="final-cta-card reveal">
       <div class="eyebrow" style="display:inline-flex"><span class="dot"></span> GET STARTED</div>
       <h2>Ready to spot<br>the <span class="hl">next move?</span></h2>
       <p>Sign in with Google to explore live market data, AI predictions, and a clear up-or-down signal on every stock.</p>
@@ -598,7 +817,8 @@
 
 <!-- ============ APP (DASHBOARD) ============ -->
 <div id="app" class="hidden">
-  <aside class="sidebar">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="appSidebar" aria-label="Main navigation">
     <div class="brand"><span class="logo-mark" data-logo="40"></span> <span class="txt">SAIA</span></div>
 
     <button class="nav-item active" data-view="home" onclick="switchView('home')"><span class="ic">⌂</span><span class="txt">Home</span></button>
@@ -618,8 +838,9 @@
     <button class="nav-item" onclick="signOutUser()"><span class="ic">⏻</span><span class="txt">Sign out</span></button>
   </aside>
 
-  <div class="main">
+  <div class="main" id="main-content">
     <div class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation menu" aria-expanded="false" aria-controls="appSidebar" onclick="toggleSidebar()">☰</button>
       <div class="search-box hidden" id="topSearchBox">
         <span>🔍</span>
         <input id="searchInput" placeholder="Search by ticker or company — e.g. AAPL or Aramco" oninput="onSearchInput()">
@@ -628,6 +849,7 @@
       <div class="user-chip" id="userChip">👤 Guest</div>
     </div>
     <div class="ticker-strip-app">
+      <div class="tape-live-badge"><span class="dot"></span>LIVE</div>
       <div class="ticker-track" id="appTape"></div>
     </div>
 
@@ -986,7 +1208,8 @@ function buildHeroDecor(){
     makeFloatArrow(false, 68, 12, -2, 7, 1.9),
     makeFloatArrow(true, 30, 88, -1, 6.5, 2.1),
     makeFloatArrow(false, 72, 84, -3, 5.5, 1.8),
-    makeFloatArrow(true, 8, 46, -4, 8, 1.6)
+    makeFloatArrow(true, 8, 46, -4, 8, 1.6),
+    makeFloatArrow(true, 88, 40, -2.5, 7.5, 1.5)
   ].join('');
   const pills = [
     `<div class="float-pill" style="top:12%;left:20%;animation-duration:7s;color:#3ecf7a">+3.2%</div>`,
@@ -995,6 +1218,82 @@ function buildHeroDecor(){
     `<div class="float-pill" style="top:60%;left:80%;animation-duration:6.5s;animation-delay:-1s;color:#3ecf7a">+0.8%</div>`
   ].join('');
   el.insertAdjacentHTML('beforeend', arrows+pills);
+}
+
+/* ================= HERO DIRECTION WORD =================
+   "The stock is moving. Which way?" — after a beat, the answer to that
+   question starts cycling between Up and Down (in the same green/rose used
+   everywhere else for gains/losses), echoing the core idea of the product
+   right in the headline instead of leaving it as a static line of copy. */
+function startHeroDirectionCycle(){
+  const el = document.getElementById('heroDirectionWord');
+  if(!el) return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const states = [
+    {text:'Which way?', cls:'accent-up'},
+    {text:'Up.', cls:'accent-up'},
+    {text:'Down.', cls:'accent-down'}
+  ];
+  let i = 0;
+  setInterval(()=>{
+    i = (i+1) % states.length;
+    el.style.opacity = '0';
+    setTimeout(()=>{
+      el.textContent = states[i].text;
+      el.className = states[i].cls;
+      el.style.opacity = '1';
+    }, 240);
+  }, 2600);
+}
+
+/* ================= COUNT-UP + HERO STATS ================= */
+function animateCountUp(el, target){
+  if(!el) return;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduceMotion || !target){ el.textContent = target ? target.toLocaleString() : '—'; return; }
+  const duration = 1200;
+  const startTime = performance.now();
+  function tick(now){
+    const p = Math.min(1, (now-startTime)/duration);
+    const eased = 1 - Math.pow(1-p, 3);
+    el.textContent = Math.round(target*eased).toLocaleString();
+    if(p<1) requestAnimationFrame(tick);
+    else el.textContent = target.toLocaleString();
+  }
+  requestAnimationFrame(tick);
+}
+// Brings the hero's stat-strip to life with real counts once companies have
+// loaded, instead of leaving it as static placeholder marketing numbers.
+function updateHeroStats(){
+  const stocksEl = document.getElementById('statStocks');
+  const sectorsEl = document.getElementById('statSectors');
+  if(stocksEl) animateCountUp(stocksEl, COMPANIES.length);
+  if(sectorsEl){
+    const sectors = new Set(COMPANIES.map(c=>c.sector).filter(Boolean));
+    const fallback = new Set(COMPANIES.map(c=>c.category).filter(Boolean));
+    animateCountUp(sectorsEl, sectors.size || fallback.size);
+  }
+}
+
+/* ================= SCROLL REVEAL ================= */
+// Fades/slides in feature cards, FAQ items, and the final CTA as they enter
+// the viewport. Elements are marked up with class="reveal" ahead of time.
+function initRevealObserver(){
+  const targets = document.querySelectorAll('.reveal');
+  if(!targets.length) return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)){
+    targets.forEach(el=>el.classList.add('visible'));
+    return;
+  }
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add('visible');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold:0.15, rootMargin:'0px 0px -40px 0px' });
+  targets.forEach(el=>io.observe(el));
 }
 
 /* ================= BACKEND API CONFIG =================
@@ -1427,6 +1726,15 @@ function isWatched(ticker){ return WATCHLIST.includes(ticker); }
 async function toggleWatch(ticker, evt){
   if(evt) evt.stopPropagation();
   if(!currentUser || !currentUser.email || watchlistBusy) return;
+  // Instant feedback on the exact button tapped — the grid re-renders after
+  // the request resolves, which would otherwise swallow any CSS class-based
+  // animation before it had a chance to play.
+  if(evt && evt.currentTarget && evt.currentTarget.animate){
+    evt.currentTarget.animate(
+      [{ transform:'scale(1)' }, { transform:'scale(1.5)' }, { transform:'scale(1)' }],
+      { duration:320, easing:'cubic-bezier(.34,1.56,.64,1)' }
+    );
+  }
   watchlistBusy = true;
   try{
     const data = await apiPost(API_CONFIG.endpoints.watchlistToggle, { email: currentUser.email, ticker });
@@ -1523,6 +1831,11 @@ function buildTape(el){
 /* ================= NAVIGATION ================= */
 let COMPANIES = [];
 let NEWS_ITEMS = [];
+// ticker -> 'up' | 'down' for a short window after a live price change, so the
+// matching stock-card can flash briefly (see startLiveDataPolling and
+// renderStockCard). Cleared a bit after each poll so an unrelated re-render
+// (e.g. toggling a star) doesn't replay the flash.
+let PRICE_FLASH_DIR = {};
 
 // Views that show the top search box, and what it searches
 const SEARCHABLE_VIEWS = { stocks: 'stocks', news: 'news' };
@@ -1576,11 +1889,44 @@ function onSearchInput(){
   renderNews();
 }
 
+/* ================= MINI SPARKLINE (decorative trend glyph) =================
+   This is NOT a fetch of real price history (that's a separate per-ticker
+   request the detail page makes — doing that for every card in a grid of
+   hundreds would mean hundreds of extra requests). It's a lightweight shape
+   seeded deterministically by the ticker, and its final leg is always bent
+   toward the stock's real change_percent, so the direction it shows on a
+   card always agrees with the real number printed right next to it. */
+function sparklinePoints(ticker, changePercent){
+  const rng = mulberry32(strSeed(ticker+'_spark'));
+  const n = 14;
+  const pts = [0];
+  for(let i=1;i<n-1;i++){
+    pts.push(pts[i-1] + (rng()-0.5)*16);
+  }
+  const trend = changePercent>=0 ? 1 : -1;
+  pts.push(pts[n-2] + trend*(9+rng()*13));
+  const min = Math.min(...pts), max = Math.max(...pts);
+  const span = (max-min) || 1;
+  return pts.map((v,i)=>({
+    x: (i/(n-1))*100,
+    y: 25 - ((v-min)/span)*20
+  }));
+}
+function sparklineSvg(ticker, changePercent){
+  const up = changePercent>=0;
+  const color = up ? 'var(--green)' : 'var(--rose)';
+  const pts = sparklinePoints(ticker, changePercent);
+  const d = pts.map((p,i)=> (i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+  return `<svg viewBox="0 0 100 26" preserveAspectRatio="none"><path class="spark-line" d="${d}" stroke="${color}"/></svg>`;
+}
+
 /* ================= STOCK CARD (shared by Stocks + Home dashboard + Watchlist) ================= */
 function renderStockCard(c){
   const up = c.change_percent>=0;
   const watched = isWatched(c.ticker);
-  return `<div class="stock-card" onclick="openDetail('${c.ticker}')">
+  const flashDir = PRICE_FLASH_DIR[c.ticker];
+  const flashClass = flashDir ? ` flash-${flashDir}` : '';
+  return `<div class="stock-card${flashClass}" onclick="openDetail('${c.ticker}')">
     <button class="star-btn ${watched?'active':''}" onclick="toggleWatch('${c.ticker}', event)" title="${watched?'Remove from watchlist':'Add to watchlist'}">${watched?'★':'☆'}</button>
     <div class="row1">
       <div><div class="sym">${c.ticker}</div><div class="name">${c.company_name}</div></div>
@@ -1590,6 +1936,7 @@ function renderStockCard(c){
       <div class="price">${fmtCur(c.price)}</div>
       <div class="chg ${up?'up':'down'}">${fmtPct(c.change_percent)}</div>
     </div>
+    <div class="spark">${sparklineSvg(c.ticker, c.change_percent)}</div>
   </div>`;
 }
 
@@ -2821,7 +3168,7 @@ function renderFAQ(){
   const el = document.getElementById('faqList');
   if(!el) return;
   el.innerHTML = FAQ_ITEMS.map((f,i)=>`
-    <div class="faq-item" id="faq-${i}">
+    <div class="faq-item reveal" id="faq-${i}">
       <button class="faq-q" onclick="toggleFAQ(${i})">
         <span>${f.q}</span>
         <span class="chev">▾</span>
@@ -2868,7 +3215,9 @@ async function bootstrap(){
   injectLogos();
   syncFaviconWithLogo();
   buildHeroDecor();
+  startHeroDirectionCycle();
   renderFAQ();
+  initRevealObserver();
   updateDataLoadingPillText();
   showDataLoadingPill(true);
 
@@ -2902,6 +3251,7 @@ async function bootstrap(){
       updateDataLoadingPillText();
       buildTape(document.getElementById('landingTape'));
       buildTape(document.getElementById('appTape'));
+      updateHeroStats();
       if(currentUser){ renderStockGrid(); renderHomeDashboard(); renderWatchlist(); }
     });
 
@@ -2935,6 +3285,37 @@ async function bootstrap(){
     renderStockGrid(); renderNews(); renderHomeDashboard(); renderWatchlist(); renderSavedNews();
   }
 }
+/* ================= MOBILE SIDEBAR DRAWER ================= */
+function openSidebar(){
+  const sb = document.getElementById('appSidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  const btn = document.getElementById('menuToggle');
+  if(!sb) return;
+  sb.classList.add('open');
+  ov.classList.add('show');
+  if(btn) btn.setAttribute('aria-expanded','true');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidebar(){
+  const sb = document.getElementById('appSidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  const btn = document.getElementById('menuToggle');
+  if(!sb) return;
+  sb.classList.remove('open');
+  ov.classList.remove('show');
+  if(btn) btn.setAttribute('aria-expanded','false');
+  document.body.style.overflow = '';
+}
+function toggleSidebar(){
+  const sb = document.getElementById('appSidebar');
+  if(sb && sb.classList.contains('open')) closeSidebar(); else openSidebar();
+}
+// Close the drawer automatically whenever a nav item is used, and on resize back to desktop.
+document.addEventListener('click', (e) => {
+  if(e.target.closest('.nav-item')) closeSidebar();
+});
+window.addEventListener('resize', () => { if(window.innerWidth > 880) closeSidebar(); });
+
 const bootstrapPromise = bootstrap();
 
 /* ================= LIVE DATA POLLING =================
@@ -2949,6 +3330,17 @@ function startLiveDataPolling(){
     try{
       const fresh = await fetchCompanies();
       if(Array.isArray(fresh) && fresh.length){
+        // Diff against the previous snapshot so cards whose price actually
+        // moved can flash green/red for a moment — same trading-terminal cue
+        // as the tick color, just applied to the whole card so a live move
+        // is impossible to miss even outside the price line itself.
+        const prevPriceByTicker = Object.fromEntries(COMPANIES.map(c=>[c.ticker, c.price]));
+        fresh.forEach(c=>{
+          const prevPrice = prevPriceByTicker[c.ticker];
+          if(prevPrice !== undefined && prevPrice !== c.price){
+            PRICE_FLASH_DIR[c.ticker] = c.price > prevPrice ? 'up' : 'down';
+          }
+        });
         COMPANIES = fresh;
         buildTape(document.getElementById('landingTape'));
         buildTape(document.getElementById('appTape'));
@@ -2957,6 +3349,10 @@ function startLiveDataPolling(){
           renderHomeDashboard();
           renderWatchlist();
         }
+        // Clear the flags after the flash animation's had time to play, so a
+        // later re-render triggered by something unrelated (e.g. starring a
+        // stock) doesn't replay it.
+        setTimeout(()=>{ PRICE_FLASH_DIR = {}; }, 1700);
       }
     }catch(e){
       console.error('Live data refresh failed:', e);
