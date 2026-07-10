@@ -65,6 +65,17 @@ def _backend():
 
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
+# Gemini 2.5 models default to *dynamic* thinking (the model decides its own
+# reasoning budget per call) when thinking_budget isn't passed explicitly.
+# For an agent that has to read a long system prompt, pick the right one of
+# 12 tools, and not invent numbers, that dynamic budget is unreliable — on
+# some turns it barely thinks before answering (-> hallucinated numbers /
+# wrong or skipped tool calls), on others it burns tokens thinking about a
+# trivial "hi". Pinning an explicit budget makes tool selection much more
+# consistent. 0 disables thinking entirely (fastest, worst tool selection);
+# -1 restores the old dynamic behavior.
+GEMINI_THINKING_BUDGET = int(os.environ.get("GEMINI_THINKING_BUDGET", "1024"))
+
 # ---- Multi-key support -----------------------------------------------------
 # You can run this with more than one Gemini API key so that if one key hits
 # its quota / rate limit / gets revoked, the chatbot automatically falls back
@@ -181,6 +192,18 @@ Rules:
   correct grammar, not a stiff or literal translation. Never mix in English
   filler unless a term (like a ticker symbol) has no natural Arabic
   equivalent.
+
+Before you answer, check yourself against these two rules — they matter more
+than any other instruction above:
+1. Does the answer contain a price, percentage, ticker fact, sentiment score,
+   prediction, or watchlist/saved-article content? If yes and you haven't
+   called a tool THIS turn to get it, call the right tool first — don't
+   answer from memory, even if you're confident, even if you already showed
+   a similar number earlier in this conversation.
+2. Is there a tool above whose description matches what the user is asking
+   (ranking → get_market_movers, comparing named tickers →
+   compare_tickers, sector → get_sector_overview, etc.)? If yes, use that
+   specific tool rather than a more generic one or none at all.
 """
 
 # ---- CACHE for the (potentially huge — 10k+ rows) companies table --------
@@ -491,7 +514,20 @@ _current_key_idx = 0
 def _get_llm_for_key(idx: int):
     if idx not in _llm_clients:
         llm = ChatGoogleGenerativeAI(
-            model=GEMINI_MODEL, api_key=GEMINI_API_KEYS[idx], temperature=0.3
+            model=GEMINI_MODEL,
+            api_key=GEMINI_API_KEYS[idx],
+            # 0, not 0.3: this agent's whole job is picking the right tool
+            # and repeating back real numbers, not being creative. Any
+            # temperature above 0 gives it room to "smooth over" a tool
+            # result or a borderline tool choice instead of the most likely
+            # (= usually correct) one, which is exactly what shows up as
+            # hallucinated numbers or an odd tool pick.
+            temperature=0,
+            thinking_budget=GEMINI_THINKING_BUDGET,
+            # Without an explicit cap, thinking + tool-call JSON + the reply
+            # itself compete for the same default token budget, and on a
+            # multi-tool turn the visible reply can come back clipped/weak.
+            max_tokens=2048,
         )
         _llm_clients[idx] = llm.bind_tools(TOOLS)
     return _llm_clients[idx]
@@ -730,7 +766,10 @@ def extract_user_facts(existing_facts: list, user_message: str, reply: str) -> l
     )
     try:
         llm = ChatGoogleGenerativeAI(
-            model=GEMINI_MODEL, api_key=GEMINI_API_KEYS[_current_key_idx], temperature=0
+            model=GEMINI_MODEL,
+            api_key=GEMINI_API_KEYS[_current_key_idx],
+            temperature=0,
+            thinking_budget=0,  # simple JSON extraction; no reasoning needed, runs in background anyway
         )
         response = llm.invoke(
             [SystemMessage(content=FACTS_EXTRACTION_PROMPT), HumanMessage(content=prompt)]
