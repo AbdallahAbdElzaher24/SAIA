@@ -176,6 +176,20 @@ Rules:
   they want actual articles.
 - For a single named ticker's prediction, use get_ticker_prediction; use
   get_top_predictions only for "best N" lists.
+- For "which stocks are predicted to fall/drop the most", use
+  get_worst_predictions (the mirror of get_top_predictions).
+- For broad "how's the market doing today" / overall mood questions, use
+  get_market_summary instead of listing individual stocks.
+- For news about a TOPIC or EVENT rather than one company (e.g. "any news
+  about mergers", "articles mentioning inflation"), use
+  search_news_by_keyword; use get_latest_news when they name a specific
+  ticker/company.
+- For "which stocks are near their 52-week high/low" screening questions, use
+  get_52_week_extremes.
+- If a signed-in user explicitly asks you to add/remove/save/track/untrack a
+  ticker on their watchlist, use modify_watchlist. Never call this
+  proactively or for anything other than an explicit add/remove request, and
+  never call it without the user's email.
 - ML price predictions and news sentiment scores are model outputs, not
   guarantees. When you present them, briefly make clear they're
   model-generated and not financial advice.
@@ -201,9 +215,12 @@ than any other instruction above:
    answer from memory, even if you're confident, even if you already showed
    a similar number earlier in this conversation.
 2. Is there a tool above whose description matches what the user is asking
-   (ranking → get_market_movers, comparing named tickers →
-   compare_tickers, sector → get_sector_overview, etc.)? If yes, use that
-   specific tool rather than a more generic one or none at all.
+   (ranking → get_market_movers, worst predictions → get_worst_predictions,
+   comparing named tickers → compare_tickers, sector → get_sector_overview,
+   overall market mood → get_market_summary, topic/news search →
+   search_news_by_keyword, 52-week screening → get_52_week_extremes,
+   add/remove watchlist → modify_watchlist, etc.)? If yes, use that specific
+   tool rather than a more generic one or none at all.
 """
 
 # ---- CACHE for the (potentially huge — 10k+ rows) companies table --------
@@ -223,6 +240,25 @@ def _get_companies_cached() -> list:
         _companies_cache["rows"] = _backend().get_companies()
         _companies_cache["fetched_at"] = now
     return _companies_cache["rows"]
+
+
+# Same idea for the full (unpaginated) predictions table — get_worst_predictions
+# pulls ALL rows to sort ascending (the paginated /api/predictions endpoint
+# only sorts descending), so without a cache every "which stocks are predicted
+# to fall the most" question would force a fresh full-table query.
+_predictions_cache: dict = {"rows": None, "fetched_at": 0.0}
+_PREDICTIONS_CACHE_TTL_SECONDS = 60
+
+
+def _get_all_predictions_cached() -> list:
+    now = time.time()
+    if (
+        _predictions_cache["rows"] is None
+        or now - _predictions_cache["fetched_at"] > _PREDICTIONS_CACHE_TTL_SECONDS
+    ):
+        _predictions_cache["rows"] = _backend().get_all_predictions()
+        _predictions_cache["fetched_at"] = now
+    return _predictions_cache["rows"]
 
 
 # ---- TOOLS -----------------------------------------------------------------
@@ -464,6 +500,126 @@ def get_ticker_prediction(ticker: str) -> dict:
 
 
 @tool
+def search_news_by_keyword(query: str, limit: int = 10) -> list:
+    """Full-text search across ALL news articles by keyword or topic — matches
+    title, ticker, or publisher name. Use this when the user asks about news on
+    a TOPIC or EVENT (e.g. "any news about interest rates", "articles
+    mentioning mergers") rather than one specific company's headlines — use
+    get_latest_news instead when they name a specific ticker/company."""
+    rows = _backend().search_news(q=query, limit=min(limit, 20), offset=0)
+    fields = (
+        "ticker", "title", "publisher_name", "source_url", "published_at",
+        "positive_score", "negative_score", "neutral_score",
+    )
+    return [{k: r.get(k) for k in fields} for r in rows]
+
+
+@tool
+def get_worst_predictions(limit: int = 10) -> list:
+    """Get the tickers with the strongest ML-predicted 30-day price DECLINES,
+    sorted worst-first (most negative predicted_change_percent first). This is
+    the mirror of get_top_predictions — use it for "which stocks are predicted
+    to fall/drop the most" questions. These are model outputs, not
+    guarantees — always caveat that when presenting them."""
+    rows = _get_all_predictions_cached()
+    ranked = [r for r in rows if r.get("predicted_change_percent") is not None]
+    ranked.sort(key=lambda r: r["predicted_change_percent"])
+    fields = (
+        "ticker", "company_name", "last_known_close_price",
+        "predicted_close_price", "predicted_change_percent",
+    )
+    return [{k: r.get(k) for k in fields} for r in ranked[: min(limit, 30)]]
+
+
+@tool
+def get_market_summary() -> dict:
+    """Get one overall snapshot of the whole platform right now: how many
+    companies are up vs. down vs. unchanged today, the average day
+    change_percent across every tracked stock, total combined trading volume,
+    and which sector is leading/lagging. Use this for broad "how's the market
+    doing today" / "what's the overall mood" questions instead of listing
+    individual stocks one by one."""
+    rows = _get_companies_cached()
+    changes = [r["change_percent"] for r in rows if r.get("change_percent") is not None]
+    volumes = [r["volume"] for r in rows if r.get("volume") is not None]
+    by_sector: dict = {}
+    for r in rows:
+        cp = r.get("change_percent")
+        if cp is not None:
+            by_sector.setdefault(r.get("sector") or "Unknown", []).append(cp)
+    sector_avgs = {s: sum(v) / len(v) for s, v in by_sector.items() if v}
+    best_sector = max(sector_avgs.items(), key=lambda x: x[1]) if sector_avgs else None
+    worst_sector = min(sector_avgs.items(), key=lambda x: x[1]) if sector_avgs else None
+    return {
+        "companies_tracked": len(rows),
+        "gainers": sum(1 for c in changes if c > 0),
+        "losers": sum(1 for c in changes if c < 0),
+        "unchanged": sum(1 for c in changes if c == 0),
+        "avg_change_percent": (sum(changes) / len(changes)) if changes else None,
+        "total_volume": sum(volumes) if volumes else None,
+        "leading_sector": (
+            {"sector": best_sector[0], "avg_change_percent": best_sector[1]} if best_sector else None
+        ),
+        "lagging_sector": (
+            {"sector": worst_sector[0], "avg_change_percent": worst_sector[1]} if worst_sector else None
+        ),
+    }
+
+
+@tool
+def get_52_week_extremes(mode: str = "near_high", limit: int = 10) -> list:
+    """Screen companies by where their current price sits inside their 52-week
+    range. mode="near_high" returns stocks trading closest to their 52-week
+    high; mode="near_low" returns stocks trading closest to their 52-week low.
+    Use this for "which stocks are near their 52-week high/low" screening
+    questions."""
+    rows = _get_companies_cached()
+    scored = []
+    for r in rows:
+        price, hi, lo = r.get("price"), r.get("week52_high"), r.get("week52_low")
+        if price is None or hi is None or lo is None or hi == lo:
+            continue
+        scored.append((r, (price - lo) / (hi - lo)))  # 1.0 = at high, 0.0 = at low
+    if not scored:
+        return [{"error": "52-week range data not available."}]
+    scored.sort(key=lambda x: x[1], reverse=(mode != "near_low"))
+    fields = ("ticker", "company_name", "price", "week52_high", "week52_low")
+    out = []
+    for r, pct in scored[: min(limit, 30)]:
+        row = {k: r.get(k) for k in fields}
+        row["pct_of_52w_range"] = round(pct * 100, 1)
+        out.append(row)
+    return out
+
+
+@tool
+def modify_watchlist(email: str, ticker: str, action: str) -> dict:
+    """Add or remove a ticker from a signed-in user's watchlist on their
+    behalf. `action` must be "add" or "remove". Only call this if you already
+    have the user's email for this conversation, and ONLY when they explicitly
+    ask to add/remove/save/track/untrack a stock — never do this proactively
+    or as a side effect of answering an unrelated question. Returns the user's
+    full updated watchlist."""
+    ticker = ticker.strip().upper()
+    email = email.strip()
+    action = action.strip().lower()
+    if action not in ("add", "remove"):
+        return {"error": "action must be 'add' or 'remove'"}
+    current = _backend().get_watchlist(email=email).get("watchlist", [])
+    is_saved = ticker in current
+    if (action == "add" and is_saved) or (action == "remove" and not is_saved):
+        return {
+            "watchlist": current,
+            "note": f"{ticker} was already {'saved' if is_saved else 'not saved'} — no change made.",
+        }
+    # toggle_watchlist flips whatever the current state is, which is exactly
+    # the transition we just confirmed is needed (add -> not saved, remove ->
+    # saved), so a single toggle call is safe here.
+    body = _backend().WatchlistToggleRequest(email=email, ticker=ticker)
+    return _backend().toggle_watchlist(body)
+
+
+@tool
 def get_saved_articles(email: str) -> list:
     """Get the full details (title, ticker, sentiment, source) of the news
     articles this signed-in user has saved/bookmarked. Only call this if you
@@ -497,6 +653,11 @@ TOOLS = [
     get_ticker_prediction,
     get_saved_articles,
     get_user_watchlist,
+    search_news_by_keyword,
+    get_worst_predictions,
+    get_market_summary,
+    get_52_week_extremes,
+    modify_watchlist,
 ]
 
 # ---- GRAPH -------------------------------------------------------------
