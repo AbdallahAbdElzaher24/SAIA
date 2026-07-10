@@ -1360,8 +1360,8 @@ function startHeroDirectionCycle(){
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const states = [
     {text:'Which way?', cls:'accent-up'},
-    {text:'Up↑', cls:'accent-up'},
-    {text:'Down↓', cls:'accent-down'}
+    {text:'Up.', cls:'accent-up'},
+    {text:'Down.', cls:'accent-down'}
   ];
   let i = 0;
   setInterval(()=>{
@@ -3366,6 +3366,11 @@ async function bootstrap(){
   updateDataLoadingPillText();
   showDataLoadingPill(true);
 
+  // "Stocks Tracked" is a fixed marketing figure, not derived from the
+  // companies API response, so it shouldn't sit on "—" waiting on that
+  // network call (which can be slow, or fail outright). Fire it right away.
+  updateHeroStats();
+
   // Home's "Latest News" card only ever shows 5 articles, but it used to
   // wait on the same 100-article fetch the News view needs — fetch just
   // those 5 separately and paint them the moment they land, instead of
@@ -3396,7 +3401,6 @@ async function bootstrap(){
       updateDataLoadingPillText();
       buildTape(document.getElementById('landingTape'));
       buildTape(document.getElementById('appTape'));
-      updateHeroStats();
       if(currentUser){ renderStockGrid(); renderHomeDashboard(); renderWatchlist(); }
     });
 
