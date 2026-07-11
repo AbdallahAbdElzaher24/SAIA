@@ -1,2 +1,2 @@
 cd Web_App
-python main.py
+python app.py
